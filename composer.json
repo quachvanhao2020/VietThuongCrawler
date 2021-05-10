@@ -1,0 +1,42 @@
+{
+    "name": "administrator/viet-thuong-crawler",
+    "authors": [
+        {
+            "name": "vanhaohero1998",
+            "email": "quachvanhao2020@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "VietThuongCrawler\\": "src/"
+        },
+        "files": [
+        ]
+    },
+    "config": {
+        "github-oauth": {
+          
+        },
+        "process-timeout":0,
+        "platform": {
+            "php": "7.3"
+        }
+    },
+    "require": {
+        "hao/ecomo":"dev-main",
+        "hao/societymo":"dev-main",
+        "paquettg/php-html-parser": "^3.1",
+        "symfony/http-client": "^5.2",
+        "laminas/laminas-cache": "^2.11",
+        "laminas/laminas-hydrator": "3.0"
+    },
+    "repositories": [
+        {"type": "vcs", "url": "https://github.com/quachvanhao2020/YPHP.git"},
+        {"type": "vcs", "url": "https://github.com/quachvanhao2020/Identimo.git"},
+        {"type": "vcs", "url": "https://github.com/quachvanhao2020/Exchamo.git"},
+        {"type": "vcs", "url": "https://github.com/quachvanhao2020/Ecomo.git"},
+        {"type": "vcs", "url": "https://github.com/quachvanhao2020/Societymo.git"}
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable" : true
+}
