@@ -102,6 +102,11 @@ class ExcelProductFactory extends BaseProductFactory{
                 "recursive" => true,
                 "children" => [],
             ],
+            Product::khuyenMai => [
+                "strategy" => $storage_strategy,
+                "recursive" => true,
+                "children" => [],
+            ],
         ];
     }
 

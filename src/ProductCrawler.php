@@ -16,11 +16,12 @@ use Ecomo\Category\Category;
 use VietThuongCrawler\Model\Product;
 use Exchamo\Money;
 use VietThuongCrawler\Model\Storage\ProductStorage;
+use YPHP\HttpStream;
+use YPHP\Model\Stream\Storage\ImageStorage;
+use YPHP\Storage\EntityStorage;
 
 class ProductCrawler{
-
     use StorageHydratorTrait;
-
     const HOST = "https://vietthuong.vn/";
 
     /**
@@ -62,40 +63,39 @@ class ProductCrawler{
      * @var Product
      */
     public function getProduct(string $id){
-        var_dump($id);
         $result = $this->cache->getItem($id);
         $result = json_decode($result,true);
         $product = $this->hydrate($result,new Product());
         return $product;
     }
 
+    public function increaseRouter(string &$router){
+        
+    }
+
     /**
      * @var ProductStorage
      */
-    public function getProducts(string $router = null,bool $full = false){
+    public function getProducts(string $router = null,bool $full = false,bool $auto = false,int $depth = 100){
         $products = new ProductStorage();
-        if(!$router){
-            foreach ($this->cache->getKeys() as $key => $value) {
-                try {
-                    $products->append($this->getProduct($key));
-                } catch (\Throwable $th) {
-                    throw $th;
-                }
-            }
-            return $products;
-        }
         $result = $this->client->request("GET",$router,['headers' => $this->prepareHeaders(),])->getContent(false);
         $dom = new Dom;
         $dom->loadStr($result);
         $products = self::getProductsByDom($dom);
+        if($auto){
+            $this->increaseRouter($router);
+            $products->merge($this->getProducts($router,false,true));
+        }
+        $i = 0;
         foreach ($products as $key => $value) {
             if($full){
                 $this->getFullProduct(self::HOST.$value->getId(),$value);
             }
-            if($value instanceof Entity){
-                $this->cache->setItem(seo_friendly_url($value->getId()),\json_encode($this->extract($value),JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));
-            }
+            //if($value instanceof Entity){ $this->cache->setItem(seo_friendly_url($value->getId()),\json_encode($this->extract($value),JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));}
+            if($i >= $depth) break;
+            $i++;
         }
+        return $products;
     }
 
     /**
@@ -136,15 +136,26 @@ class ProductCrawler{
         return $product;
     }
 
-        /**
+    protected $contents = [];
+
+    /**
      * @var Product
      */
     public static function getFullProductByNode(HtmlNode $node,Product &$product = null){
         $product = $product ? $product : new Product();
         try {
             $content_box_khuyen_mai = @$node->find(".content_box_khuyen_mai")[0];
-            @$product->setKhuyenMaiHtml($content_box_khuyen_mai->innerHtml);
-        } catch (\Exception $th) {
+            $s = new EntityStorage();
+            foreach ($content_box_khuyen_mai->getChildren() as $value) {
+                $id = $value->id();
+                $content = $value->outerHtml;
+                if(!empty($content) && strlen($content) > 5){
+                    //file_put_contents(__DIR__."/../view/{$id}.html",$content);
+                    $s->append(new Entity($id));
+                }
+            }
+            $product->setKhuyenMai($s);
+        } catch (\Throwable $th) {
             //throw $th;
         }
         try {
@@ -159,7 +170,7 @@ class ProductCrawler{
         try {
             $tab_video = $node->find("#tab-video");
             $iframe = @$tab_video->find('iframe')[0];
-            @$product->setYoutubeVideo($iframe->getAttribute("src"));
+            $product->setYoutubeVideo($iframe->getAttribute("src"));
         } catch (\Exception $ex) {
             //throw $th;
         }
@@ -176,6 +187,23 @@ class ProductCrawler{
         } catch (\Throwable $th) {
             throw $th;
         }
+
+        try {
+            $gallery = $node->find(".image-gallery_full")[0];
+            $imgs = $gallery->find("img");
+            $imgss = new ImageStorage();
+            foreach ($imgs as $img) {
+                $src = $img->getAttribute("src");
+                printf("reading image: %s\n",$src);
+                $stream = new HttpStream();
+                $stream->setSource($src);
+                $imgss->append((new Image())->setSrc($src)->setStream($stream));
+            }
+            $product->setImageGallery($imgss);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+
         return $product;
     }
 
@@ -184,7 +212,7 @@ class ProductCrawler{
      */
     public function getFullProduct(string $router,Product &$product = null){
         $router = trim($router);
-        var_dump($router);
+        printf("reading: %s\n",$router);
         $product = $product ? $product : new Product();
         $result = $this->client->request("GET",$router,['headers' => $this->prepareHeaders(),])->getContent(false);
         $dom = new Dom;
@@ -194,18 +222,7 @@ class ProductCrawler{
             return self::getFullProductByNode($container,$product);
         } catch (\Throwable $th) {
             throw $th;
-            var_dump($result);
         }
     }
 
-}
-
-function seo_friendly_url($string){
-    $string = str_replace(array('[\', \']'), '', $string);
-    $string = preg_replace('/\[.*\]/U', '', $string);
-    $string = preg_replace('/&(amp;)?#?[a-z0-9]+;/i', '-', $string);
-    $string = htmlentities($string, ENT_COMPAT, 'utf-8');
-    $string = preg_replace('/&([a-z])(acute|uml|circ|grave|ring|cedil|slash|tilde|caron|lig|quot|rsquo);/i', '\\1', $string );
-    $string = preg_replace(array('/[^a-z0-9]/i', '/[-]+/') , '-', $string);
-    return strtolower(trim($string, '-'));
 }

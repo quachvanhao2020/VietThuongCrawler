@@ -6,18 +6,19 @@ use YPHP\Filter\AwareKeepInterface;
 use Ecomo\Filter\AwarePriceInterface;
 use YPHP\Filter\AwareSortFilterInterface;
 use YPHP\Model\Stream\Storage\ImageStorage;
+use YPHP\Storage\EntityStorage;
 
 class Product extends ProductSocietyXX implements AwareKeepInterface,AwarePriceInterface,AwareSortFilterInterface {
 
-    const khuyenMaiHtml = "khuyenMaiHtml";
+    const khuyenMai = "khuyenMai";
     const descriptionHtml = "descriptionHtml";
     const tsktHtml = "tsktHtml";
     const imageGallery = "imageGallery";
 
     /**
-     * @var string
+     * @var EntityStorage
      */
-    protected $khuyenMaiHtml;
+    protected $khuyenMai;
     /**
      * @var string
      */
@@ -173,29 +174,6 @@ class Product extends ProductSocietyXX implements AwareKeepInterface,AwarePriceI
         return $this;
     }
 
-    /**
-     * Get the value of khuyenMaiHtml
-     *
-     * @return  string
-     */ 
-    public function getKhuyenMaiHtml()
-    {
-        return $this->khuyenMaiHtml;
-    }
-
-    /**
-     * Set the value of khuyenMaiHtml
-     *
-     * @param  string  $khuyenMaiHtml
-     *
-     * @return  self
-     */ 
-    public function setKhuyenMaiHtml(string $khuyenMaiHtml = null)
-    {
-        $this->khuyenMaiHtml = $khuyenMaiHtml;
-
-        return $this;
-    }
 
     /**
      * Get the value of imageGallery
@@ -204,6 +182,7 @@ class Product extends ProductSocietyXX implements AwareKeepInterface,AwarePriceI
      */ 
     public function getImageGallery()
     {
+        if(!$this->imageGallery) $this->imageGallery = new ImageStorage();
         return $this->imageGallery;
     }
 
@@ -217,6 +196,31 @@ class Product extends ProductSocietyXX implements AwareKeepInterface,AwarePriceI
     public function setImageGallery(ImageStorage $imageGallery = null)
     {
         $this->imageGallery = $imageGallery;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of khuyenMai
+     *
+     * @return  EntityStorage
+     */ 
+    public function getKhuyenMai()
+    {
+        if(!$this->khuyenMai) $this->khuyenMai = new EntityStorage();
+        return $this->khuyenMai;
+    }
+
+    /**
+     * Set the value of khuyenMai
+     *
+     * @param  EntityStorage  $khuyenMai
+     *
+     * @return  self
+     */ 
+    public function setKhuyenMai(EntityStorage $khuyenMai)
+    {
+        $this->khuyenMai = $khuyenMai;
 
         return $this;
     }
